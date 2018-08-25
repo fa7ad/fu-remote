@@ -1,3 +1,3 @@
 # fu-remote
----
-Golang socket server to receive commands from fu-remote app.
+
+Go based websocket server to receive commands from fu-remote app.
