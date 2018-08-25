@@ -1,0 +1,49 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <script src="https://cdn.jsdelivr.net/npm/sockjs-client@1/dist/sockjs.min.js"></script>
+  <meta charset="UTF-8">
+  <title>fu-remote</title>
+</head>
+
+<body>
+  <h1>fu-remote test</h1>
+  <form>
+    <button>vol+</button>
+    <button>vol-</button>
+  </form>
+  <br/> Messages from server:</br>
+  <textarea cols=80 rows=5 id="output"></textarea>
+  <br/> status: <span id="status">connecting...</span>
+
+  <script>
+    const sock = new window.SockJS(window.location.origin + '/ws')
+
+    const status = document.getElementById('status')
+    const output = document.getElementById('output')
+    const form = document.querySelector('form')
+    const buttons = form.querySelectorAll('button')
+
+    sock.onopen = function () {
+      status.innerHTML = 'connected'
+    }
+
+    sock.onmessage = function (e) {
+      output.value = e.data + '\n' + output.value
+    }
+
+    sock.onclose = function () {
+      status.innerHTML = 'connection closed'
+    }
+
+    buttons.forEach(function (btn) {
+      btn.addEventListener('click', function (e) {
+        e.preventDefault()
+        sock.send(e.target.innerText)
+      })
+    })
+  </script>
+</body>
+
+</html>
