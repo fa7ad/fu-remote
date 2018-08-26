@@ -6,11 +6,12 @@ import (
 	"net/http"
 	"os/exec"
 
-	"gopkg.in/igm/sockjs-go.v2/sockjs"
+	"github.com/gorilla/websocket"
 )
 
 var (
-	websocket = flag.Bool("websocket", true, "enable/disable websocket protocol")
+	port     = flag.String("port", "8080", "http port for the server")
+	upgrader = websocket.Upgrader{}
 )
 
 func init() {
@@ -18,19 +19,24 @@ func init() {
 }
 
 func main() {
-	opts := sockjs.DefaultOptions
-	opts.Websocket = *websocket
-	handler := sockjs.NewHandler("/ws", opts, wsHandler)
-	http.Handle("/ws/", handler)
+	log.SetFlags(0)
+	http.HandleFunc("/fu", ws)
 	http.Handle("/", http.FileServer(http.Dir("web/")))
-	log.Println("Listening on http://localhost:8080/")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	log.Printf("Listening on http://localhost:%s/", *port)
+	log.Fatal(http.ListenAndServe(":"+*port, nil))
 }
 
-func wsHandler(session sockjs.Session) {
-	log.Println("new sockjs session connected")
+func ws(w http.ResponseWriter, r *http.Request) {
+	c, err := upgrader.Upgrade(w, r, nil)
+	if err != nil {
+		log.Print("upgrade:", err)
+		return
+	}
+	defer c.Close()
+	log.Println("New client connect")
+	defer log.Println("Client disconnected")
 	for {
-		msg, err := session.Recv()
+		mt, message, err := c.ReadMessage()
 		if err != nil {
 			break
 		}
@@ -38,36 +44,35 @@ func wsHandler(session sockjs.Session) {
 		run := func() bool {
 			return false
 		}
-		switch msg {
+
+		switch string(message) {
 		case "vol+":
-			run = func() bool {
-				return vol(true)
-			}
+			run = vol("5%+")
 		case "vol-":
-			run = func() bool {
-				return vol(false)
-			}
+			run = vol("5%-")
+		case "mute":
+			run = vol("toggle")
 		}
-		session.Send(getMessage(run()))
-		continue
+
+		err = c.WriteMessage(mt, getMessage(run()))
+		if err != nil {
+			break
+		}
 	}
-	log.Println("sockjs session closed")
 }
 
-func vol(plus bool) bool {
-	val := "5%+"
-	if !plus {
-		val = "5%-"
-	}
-	cmd := exec.Command("amixer", "sset", "Master", val)
-	err := cmd.Run()
+func vol(val string) func() bool {
+	return func() bool {
+		cmd := exec.Command("amixer", "sset", "Master", val)
+		err := cmd.Run()
 
-	return err == nil
+		return err == nil
+	}
 }
 
-func getMessage(res bool) string {
+func getMessage(res bool) []byte {
 	if res {
-		return "success"
+		return []byte("success")
 	}
-	return "fail"
+	return []byte("fail")
 }
