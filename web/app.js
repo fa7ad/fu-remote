@@ -21,6 +21,12 @@ socket.addEventListener('close', function () {
 buttons.forEach(function (btn) {
   btn.addEventListener('click', function (e) {
     e.preventDefault()
-    socket.send(e.target.innerText)
+    socket.send(JSON.stringify({ command: e.target.innerText }))
   })
 })
+
+function debugMe () {
+  document.querySelector('.debug').style.display = 'block'
+}
+
+window.debugMe = debugMe

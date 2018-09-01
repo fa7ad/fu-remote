@@ -4,18 +4,29 @@
 <head>
   <meta charset="UTF-8">
   <title>fu-remote</title>
+  <style>
+    .debug {
+      display: none;
+    }
+
+  </style>
 </head>
 
 <body>
-  <h1>fu-remote test</h1>
-  <form>
-    <button>vol+</button>
-    <button>vol-</button>
-    <button>mute</button>
-  </form>
-  <br/> Messages from server:</br>
-  <textarea cols=80 rows=5 id="output"></textarea>
-  <br/> status: <span id="status">connecting...</span>
+  <div class="debug">
+    <h1>fu-remote test</h1>
+    <form>
+      <button>vol+</button>
+      <button>vol-</button>
+      <button>volmute</button>
+      <button>willfail</button>
+    </form>
+    <br/>Messages from server:<br/>
+    <textarea cols=80 rows=5 id="output"></textarea>
+    <br/> status: <span id="status">connecting...</span>
+  </div>
+  <div id="app">
+  </div>
 
   <script src="app.js"></script>
 </body>
